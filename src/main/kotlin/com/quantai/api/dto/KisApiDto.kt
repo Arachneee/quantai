@@ -1,6 +1,8 @@
 package com.quantai.api.dto
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
+import java.time.LocalDateTime
 
 /**
  * 토큰 발급 요청 DTO
@@ -28,6 +30,10 @@ data class TokenResponse(
 
     @JsonProperty("expires_in")
     val expiresIn: Int,
+
+    @JsonProperty("access_token_token_expired")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    val accessTokenExpired: LocalDateTime
 )
 
 /**

@@ -13,6 +13,8 @@ import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
 
@@ -24,29 +26,38 @@ class KisApiClient(
 ) {
     private val logger = logger()
     private val tokenRef = AtomicReference<String>(null)
+    private val tokenExpired = AtomicReference<LocalDateTime>(null)
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
     private lateinit var webClient: WebClient
 
     @PostConstruct
     fun initialize() {
+        val baseUrl = if (properties.port > 0) {
+            "${properties.host}:${properties.port}"
+        } else {
+            properties.host
+        }
+
         webClient = webClientBuilder
-            .baseUrl(properties.host)
+            .baseUrl(baseUrl)
             .build()
 
-        logger.info("KIS API Client initialized with host: ${properties.host}")
+        logger.info("KIS API Client initialized with baseUrl: $baseUrl")
     }
 
-    /**
-     * API 접근 토큰 발급 받기
-     * @return 토큰을 포함한 Mono
-     */
     fun getAccessToken(): Mono<String> {
-        // 토큰이 이미 있으면 재사용
         val existingToken = tokenRef.get()
-        if (existingToken != null) {
+        val existingTokenExpired = tokenExpired.get()
+        if (existingToken != null && existingTokenExpired != null
+            && LocalDateTime.now().isBefore(existingTokenExpired)
+        ) {
             return Mono.just(existingToken)
         }
 
+        return requestNewToken()
+    }
+
+    private fun requestNewToken(): Mono<String> {
         val request = TokenRequest(
             appKey = properties.appKey,
             appSecret = properties.appSecret
@@ -60,9 +71,14 @@ class KisApiClient(
             .bodyToMono(TokenResponse::class.java)
             .map { response ->
                 val newToken = response.accessToken
+                val accessTokenExpired = response.accessTokenExpired
                 tokenRef.set(newToken)
+                tokenExpired.set(accessTokenExpired)
                 logger.info("KIS API 접근 토큰 발급 완료")
                 newToken
+            }
+            .doOnError { error ->
+                logger.error("토큰 발급 중 오류 발생: ${error.message}", error)
             }
     }
 }
