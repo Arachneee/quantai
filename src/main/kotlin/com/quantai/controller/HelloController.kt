@@ -6,7 +6,6 @@ import reactor.core.publisher.Mono
 
 @RestController
 class HelloController {
-
     @GetMapping("/hello")
     fun hello(): Mono<String> {
         return Mono.just("Hello, Quantai WebFlux application!")

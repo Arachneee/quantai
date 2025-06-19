@@ -19,3 +19,20 @@ gradle-app.setting
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
+
+# 민감한 정보가 포함된 로컬 설정 파일
+**/application-local.yml
+**/application-local.properties
+**/application-dev.yml
+**/application-dev.properties
+**/application-prod.yml
+**/application-prod.properties
+
+# IDE 관련 파일
+.idea/
+*.iml
+*.iws
+*.ipr
+.settings/
+.vscode/
+*.sublime-workspace

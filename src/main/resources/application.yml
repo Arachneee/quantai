@@ -1,6 +1,52 @@
-server:
-  port: 8080
-
 spring:
-  application:
-    name: quantai-webflux
+  profiles:
+    active: local  # 기본 프로필을 local로 설정
+  batch:
+    job:
+      enabled: false  # 애플리케이션 시작 시 자동으로 작업을 실행하지 않도록 설정
+    jdbc:
+      initialize-schema: always
+
+  r2dbc:
+    url: r2dbc:h2:mem:///stockdata;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+webclient:
+  maxInMemorySize: 16777216  # 16MB
+  connection:
+    timeout: PT5S
+    maxConnections: 500
+    maxIdleTime: PT20S
+    maxLifeTime: PT60S
+    pendingAcquireTimeout: PT60S
+    evictInBackground: PT120S
+  read:
+    timeout: PT5S
+  write:
+    timeout: PT5S
+
+kisClient:
+  host: https://openapivts.koreainvestment.com  # 모의투자 환경 URL, 실제 환경은 https://openapi.koreainvestment.com
+  port: 29443
+  appKey: ${KIS_APP_KEY:MISSING_APP_KEY}
+  appSecret: ${KIS_APP_SECRET:MISSING_APP_SECRET}
+  customHeaders:
+    tr-id: FHKST01010100  # 주식 시세 조회
+    tr-cont: N
+
+stock:
+  batch:
+    cron: "0 0 18 * * MON-FRI"  # 평일 오후 6시에 실행
+    pageSize: 100
+    stockCodes:
+      - "005930"  # 삼성전자
+      - "000660"  # SK하이닉스
+      - "035420"  # NAVER
+      - "035720"  # 카카오
+      - "005380"  # 현대차
