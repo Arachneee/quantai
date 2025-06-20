@@ -2,12 +2,10 @@ package com.quantai.controller
 
 import com.quantai.api.dto.StockPriceResponse
 import com.quantai.service.StockService
+import com.quantai.service.dto.StockMarketCapDto
 import org.springframework.format.annotation.DateTimeFormat
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.time.LocalDate
 
@@ -27,7 +25,8 @@ class StockController(private val stockService: StockService) {
     @GetMapping("/{stockCode}/daily-prices")
     fun getDailyStockPrices(
         @PathVariable stockCode: String,
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate? = LocalDate.now().minusWeeks(1),
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) startDate: LocalDate? = LocalDate.now()
+            .minusWeeks(1),
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate? = LocalDate.now(),
         @RequestParam(required = false, defaultValue = "N") adjustedPrice: String
     ): Mono<StockPriceResponse> {
@@ -37,5 +36,25 @@ class StockController(private val stockService: StockService) {
             endDate ?: LocalDate.now(),
             adjustedPrice
         )
+    }
+
+    /**
+     * 시가총액 기준으로 상위 n개 종목을 조회합니다.
+     *
+     * @param limit 가져올 종목 수 (기본값: 100)
+     * @return 시가총액 내림차순으로 정렬된 상위 n개 종목 목록
+     */
+    @GetMapping("/market-cap/top")
+    fun getMarketCapTop(
+        @RequestParam(required = false, defaultValue = "100") limit: Int,
+        @RequestParam(required = false, defaultValue = "0") page: Int = 0
+    ): Flux<StockMarketCapDto> {
+        val safeLimit = when {
+            limit <= 0 -> 100 // 기본값
+            limit > 5000 -> 5000 // 최대값
+            else -> limit
+        }
+        val safePage = if (page < 0) 0 else page
+        return stockService.getMarketCapTop(page, safeLimit)
     }
 }

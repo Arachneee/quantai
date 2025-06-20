@@ -13,8 +13,6 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.kotlin.extra.math.sumAsInt
 
-private const val i = 200
-
 @Service
 class StockCodeExcelService(
     private val stockCodeRepository: StockCodeRepository
