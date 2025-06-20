@@ -1,9 +1,9 @@
 spring:
   profiles:
-    active: local  # 기본 프로필을 local로 설정
+    active: local
   batch:
     job:
-      enabled: false  # 애플리케이션 시작 시 자동으로 작업을 실행하지 않도록 설정
+      enabled: false
     jdbc:
       initialize-schema: always
 
@@ -17,14 +17,34 @@ spring:
       enabled: true
       path: /h2-console
 
-  # MongoDB 설정
   data:
     mongodb:
       uri: mongodb://quantai:quantaipassword@localhost:27017/stockdb?authSource=admin
       auto-index-creation: true
+      connection:
+        pool:
+          max-size: 100
+          min-size: 5
+          max-wait-time: PT15S
+          max-connection-life-time: PT60S
+          max-connection-idle-time: PT30S
+        socket-timeout: PT5S
+        connect-timeout: PT10S
+        server-selection-timeout: PT15S
+      read-preference: primaryPreferred
+      write-concern:
+        w: majority
+        journal: true
+        timeout: PT5S
+      retry:
+        writes: true
+        reads: true
+      heartbeat:
+        frequency: PT10S
+        min-frequency: PT0.5S
 
 webclient:
-  maxInMemorySize: 16777216  # 16MB
+  maxInMemorySize: 16777216
   connection:
     timeout: PT5S
     maxConnections: 500
@@ -50,11 +70,11 @@ kis-client-real:
 
 stock:
   batch:
-    cron: "0 0 18 * * MON-FRI"  # 평일 오후 6시에 실행
+    cron: "0 0 18 * * MON-FRI"
     pageSize: 100
     stockCodes:
-      - "005930"  # 삼성전자
-      - "000660"  # SK하이닉스
-      - "035420"  # NAVER
-      - "035720"  # 카카오
-      - "005380"  # 현대차
+      - "005930"
+      - "000660"
+      - "035420"
+      - "035720"
+      - "005380"
