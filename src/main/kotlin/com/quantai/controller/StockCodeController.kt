@@ -18,8 +18,8 @@ class StockCodeController(
      * @param marketType 시장 유형 (KOSPI 또는 KOSDAQ)
      * @return 저장된 종목 코드 개수
      */
-    @PostMapping("/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    suspend fun uploadStockCodes(
+    @PutMapping("/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun uploadStockCodes(
         @RequestPart("file") filePart: FilePart,
         @RequestParam("marketType") marketType: MarketType,
     ): Mono<Int> = stockCodeExcelService.processStockCodeExcel(filePart, marketType)

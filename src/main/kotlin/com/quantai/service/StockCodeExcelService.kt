@@ -5,9 +5,7 @@ import com.quantai.domain.StockCode
 import com.quantai.domain.StockCodeRepository
 import com.quantai.log.errorLog
 import com.quantai.log.logger
-import org.apache.poi.ss.usermodel.Row
-import org.apache.poi.ss.usermodel.Sheet
-import org.apache.poi.ss.usermodel.WorkbookFactory
+import org.apache.poi.ss.usermodel.*
 import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.stereotype.Service
@@ -68,10 +66,10 @@ class StockCodeExcelService(
         marketType: MarketType
     ): StockCode = with(row) {
         StockCode(
-            code = getCell(0)?.stringCellValue?.trim() ?: "",
-            name = getCell(2)?.stringCellValue?.trim() ?: "",
-            standardCode = getCell(1)?.stringCellValue?.trim() ?: "",
-            marketCap = (getCell(getMarketCapIndex(headerIndexMap))?.stringCellValue?.trim() ?: "").toIntOrNull(),
+            code = getCellValue(getCell(0)) ?: "",
+            name = getCellValue(getCell(2)) ?: "",
+            standardCode = getCellValue(getCell(1)) ?: "",
+            marketCap = getNumericCellValue(getCell(getMarketCapIndex(headerIndexMap))),
             additionalAttributes = createAdditionalAttributes(headerIndexMap, this),
             marketType = marketType
         )
@@ -86,9 +84,53 @@ class StockCodeExcelService(
     ): MutableMap<String, String> {
         return headerIndexMap
             .filter { (_, index) -> index > 2 }
-            .mapValues { (_, index) -> row.getCell(index)?.stringCellValue?.trim() ?: "" }
+            .mapValues { (_, index) -> getCellValue(row.getCell(index)) ?: "" }
             .filterValues { it.isNotEmpty() }
             .toMutableMap()
+    }
+
+    private fun getCellValue(cell: Cell?): String? {
+        if (cell == null) return null
+
+        return when (cell.cellType) {
+            CellType.NUMERIC -> cell.numericCellValue.toString()
+            CellType.STRING -> cell.stringCellValue.trim()
+            CellType.BOOLEAN -> cell.booleanCellValue.toString()
+            CellType.FORMULA -> {
+                try {
+                    cell.numericCellValue.toString()
+                } catch (e: IllegalStateException) {
+                    try {
+                        cell.stringCellValue.trim()
+                    } catch (e: IllegalStateException) {
+                        null
+                    }
+                }
+            }
+            CellType.BLANK -> null
+            else -> null
+        }
+    }
+
+    private fun getNumericCellValue(cell: Cell?): Int? {
+        if (cell == null) return null
+
+        return when (cell.cellType) {
+            CellType.NUMERIC -> cell.numericCellValue.toInt()
+            CellType.STRING -> cell.stringCellValue.trim().toIntOrNull()
+            CellType.FORMULA -> {
+                try {
+                    cell.numericCellValue.toInt()
+                } catch (e: IllegalStateException) {
+                    try {
+                        cell.stringCellValue.trim().toIntOrNull()
+                    } catch (e: IllegalStateException) {
+                        null
+                    }
+                }
+            }
+            else -> null
+        }
     }
 
     companion object {

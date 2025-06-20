@@ -27,6 +27,8 @@ services:
       ME_CONFIG_MONGODB_ADMINUSERNAME: quantai
       ME_CONFIG_MONGODB_ADMINPASSWORD: quantaipassword
       ME_CONFIG_MONGODB_URL: mongodb://quantai:quantaipassword@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: 1234
     depends_on:
       - mongodb
     networks:
