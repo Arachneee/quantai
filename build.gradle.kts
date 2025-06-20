@@ -40,6 +40,10 @@ dependencies {
     // Netty DNS 라이브러리 - MacOS 네이티브 지원
     implementation("io.netty:netty-resolver-dns-native-macos:4.1.107.Final:osx-${osdetector.arch}")
 
+    // Excel 처리를 위한 Apache POI 라이브러리
+    implementation("org.apache.poi:poi:5.2.3")
+    implementation("org.apache.poi:poi-ooxml:5.2.3")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.springframework.batch:spring-batch-test")
