@@ -1,12 +1,11 @@
 package com.quantai.api
 
 import com.quantai.api.dto.TokenResponse
-import com.quantai.config.KisClientProperties
+import com.quantai.config.KisClientMockProperties
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.verify
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -19,13 +18,13 @@ import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 
 @ExtendWith(MockKExtension::class)
-class KisApiClientTest {
+class KisApiMockClientTest {
 
     @MockK
     lateinit var webClientBuilder: WebClient.Builder
 
     @MockK
-    lateinit var properties: KisClientProperties
+    lateinit var properties: KisClientMockProperties
 
     @MockK
     lateinit var webClient: WebClient
@@ -39,7 +38,7 @@ class KisApiClientTest {
     @MockK
     lateinit var responseSpec: ResponseSpec
 
-    lateinit var kisApiClient: KisApiClient
+    lateinit var kisApiMockClient: KisMockClient
 
     @BeforeEach
     fun setup() {
@@ -58,8 +57,8 @@ class KisApiClientTest {
         every { requestBodySpec.retrieve() } returns responseSpec
 
         // KisApiClient 생성 및 초기화
-        kisApiClient = KisApiClient(webClientBuilder, properties)
-        kisApiClient.initialize()
+        kisApiMockClient = KisMockClient(webClientBuilder, properties)
+        kisApiMockClient.initialize()
     }
 
     @Test
@@ -75,7 +74,7 @@ class KisApiClientTest {
         every { responseSpec.bodyToMono(TokenResponse::class.java) } returns Mono.just(tokenResponse)
 
         // When & Then
-        StepVerifier.create(kisApiClient.getAccessToken())
+        StepVerifier.create(kisApiMockClient.getAccessToken())
             .expectNext(expectedToken)
             .verifyComplete()
 
@@ -101,7 +100,7 @@ class KisApiClientTest {
         every { responseSpec.bodyToMono(TokenResponse::class.java) } returns Mono.just(tokenResponse)
 
         // 첫 번째 호출로 토큰 캐시
-        StepVerifier.create(kisApiClient.getAccessToken())
+        StepVerifier.create(kisApiMockClient.getAccessToken())
             .expectNext(expectedToken)
             .verifyComplete()
 
@@ -109,7 +108,7 @@ class KisApiClientTest {
         clearMocks(webClient)
 
         // When & Then: 이미 토큰이 있을 때 다시 호출
-        StepVerifier.create(kisApiClient.getAccessToken())
+        StepVerifier.create(kisApiMockClient.getAccessToken())
             .expectNext(expectedToken)
             .verifyComplete()
 
