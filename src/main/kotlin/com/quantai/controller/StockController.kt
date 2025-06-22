@@ -1,12 +1,11 @@
 package com.quantai.controller
 
-import com.quantai.api.dto.StockPriceResponse
+import com.quantai.domain.DailyStockPrice
 import com.quantai.service.StockService
 import com.quantai.service.dto.StockMarketCapDto
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 import java.time.LocalDate
 
 @RestController
@@ -29,7 +28,7 @@ class StockController(private val stockService: StockService) {
             .minusWeeks(1),
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) endDate: LocalDate? = LocalDate.now(),
         @RequestParam(required = false, defaultValue = "N") adjustedPrice: String
-    ): Mono<StockPriceResponse> {
+    ): Flux<DailyStockPrice> {
         return stockService.getDailyStockPrice(
             stockCode,
             startDate ?: LocalDate.now().minusWeeks(1),
