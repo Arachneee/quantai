@@ -8,22 +8,23 @@ import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
-import java.util.*
+import java.util.UUID
 
 @Component
 @EnableScheduling
 class BatchScheduler(
     private val jobLauncher: JobLauncher,
     private val stockDailyDataCollectionJob: Job,
-    private val stockMinuteDataCollectionJob: Job
+    private val stockMinuteDataCollectionJob: Job,
 ) {
     private val logger = logger()
 
-    @Scheduled(cron = "0 47 0 * * *")
+    @Scheduled(cron = "30 17 2 * * *")
     fun runPreviousStockDailyDataCollectionJob() {
-        val jobParameters = JobParametersBuilder()
-            .addString("uuid", UUID.randomUUID().toString())
-            .toJobParameters()
+        val jobParameters =
+            JobParametersBuilder()
+                .addString("uuid", UUID.randomUUID().toString())
+                .toJobParameters()
 
         logger.info("과거 주식 일봉 데이터 수집 배치 작업 시작: ${LocalDateTime.now()}")
         jobLauncher.run(stockDailyDataCollectionJob, jobParameters)
@@ -31,9 +32,10 @@ class BatchScheduler(
 
     @Scheduled(cron = "0 52 21 * * *")
     fun runPreviousStockMinuteDataCollectionJob() {
-        val jobParameters = JobParametersBuilder()
-            .addString("uuid", UUID.randomUUID().toString())
-            .toJobParameters()
+        val jobParameters =
+            JobParametersBuilder()
+                .addString("uuid", UUID.randomUUID().toString())
+                .toJobParameters()
 
         logger.info("과거 주식 분봉 데이터 수집 배치 작업 시작: ${LocalDateTime.now()}")
         jobLauncher.run(stockMinuteDataCollectionJob, jobParameters)

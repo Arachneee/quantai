@@ -8,5 +8,5 @@ import reactor.core.publisher.MonoSink
 data class QueuedApiRequest(
     val clientRequest: ClientRequest,
     val nextExchange: ExchangeFunction,
-    val responseSink: MonoSink<ClientResponse>
+    val responseSink: MonoSink<ClientResponse>,
 )

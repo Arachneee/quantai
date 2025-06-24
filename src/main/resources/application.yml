@@ -68,4 +68,4 @@ kis-client-real:
   port: 9443
   appKey: ${KIS_APP_KEY:MISSING_APP_KEY}
   appSecret: ${KIS_APP_SECRET:MISSING_APP_SECRET}
-  delayDuration: PT50MS
+  delayDuration: PT0.05S

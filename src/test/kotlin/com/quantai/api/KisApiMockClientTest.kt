@@ -11,9 +11,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClient.*
+import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
+import java.time.Duration
 import java.time.LocalDateTime
 
 @ExtendWith(MockKExtension::class)
@@ -28,7 +30,7 @@ class KisApiMockClientTest {
     lateinit var webClient: WebClient
 
     @MockK
-    lateinit var requestBodyUriSpec: RequestBodyUriSpec
+    lateinit var requestBodyUriSpec: WebClient.RequestBodyUriSpec
 
     @MockK
     lateinit var requestBodySpec: RequestBodySpec
@@ -44,9 +46,12 @@ class KisApiMockClientTest {
         every { properties.host } returns "https://test-api.com"
         every { properties.appKey } returns "test-app-key"
         every { properties.appSecret } returns "test-app-secret"
+        every { properties.port } returns 29443
+        every { properties.delayDuration } returns Duration.ofMillis(100)
 
         // WebClient 모킹
         every { webClientBuilder.baseUrl(any()) } returns webClientBuilder
+        every { webClientBuilder.filter(any()) } returns webClientBuilder
         every { webClientBuilder.build() } returns webClient
         every { webClient.post() } returns requestBodyUriSpec
         every { requestBodyUriSpec.uri(any<String>()) } returns requestBodySpec
@@ -63,17 +68,19 @@ class KisApiMockClientTest {
     fun `getAccessToken should return token from API response`() {
         // Given
         val expectedToken = "mock-access-token"
-        val tokenResponse = TokenResponse(
-            accessToken = expectedToken,
-            tokenType = "Bearer",
-            expiresIn = 86400,
-            accessTokenExpired = LocalDateTime.now().plusDays(1)
-        )
+        val tokenResponse =
+            TokenResponse(
+                accessToken = expectedToken,
+                tokenType = "Bearer",
+                expiresIn = 86400,
+                accessTokenExpired = LocalDateTime.now().plusDays(1),
+            )
 
         every { responseSpec.bodyToMono(TokenResponse::class.java) } returns Mono.just(tokenResponse)
 
         // When & Then
-        StepVerifier.create(kisApiMockClient.getAccessToken())
+        StepVerifier
+            .create(kisApiMockClient.getAccessToken())
             .expectNext(expectedToken)
             .verifyComplete()
 
@@ -90,17 +97,19 @@ class KisApiMockClientTest {
     fun `getAccessToken should reuse existing token when available`() {
         // Given
         val expectedToken = "mock-access-token"
-        val tokenResponse = TokenResponse(
-            accessToken = expectedToken,
-            tokenType = "Bearer",
-            expiresIn = 86400,
-            accessTokenExpired = LocalDateTime.now().plusDays(1),
-        )
+        val tokenResponse =
+            TokenResponse(
+                accessToken = expectedToken,
+                tokenType = "Bearer",
+                expiresIn = 86400,
+                accessTokenExpired = LocalDateTime.now().plusDays(1),
+            )
 
         every { responseSpec.bodyToMono(TokenResponse::class.java) } returns Mono.just(tokenResponse)
 
         // 첫 번째 호출로 토큰 캐시
-        StepVerifier.create(kisApiMockClient.getAccessToken())
+        StepVerifier
+            .create(kisApiMockClient.getAccessToken())
             .expectNext(expectedToken)
             .verifyComplete()
 
@@ -108,7 +117,8 @@ class KisApiMockClientTest {
         clearMocks(webClient)
 
         // When & Then: 이미 토큰이 있을 때 다시 호출
-        StepVerifier.create(kisApiMockClient.getAccessToken())
+        StepVerifier
+            .create(kisApiMockClient.getAccessToken())
             .expectNext(expectedToken)
             .verifyComplete()
 

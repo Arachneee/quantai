@@ -10,10 +10,8 @@ import java.time.LocalDateTime
 data class TokenRequest(
     @JsonProperty("grant_type")
     val grantType: String = "client_credentials",
-
     @JsonProperty("appkey")
     val appKey: String,
-
     @JsonProperty("appsecret")
     val appSecret: String,
 )
@@ -24,37 +22,27 @@ data class TokenRequest(
 data class TokenResponse(
     @JsonProperty("access_token")
     val accessToken: String,
-
     @JsonProperty("token_type")
     val tokenType: String,
-
     @JsonProperty("expires_in")
     val expiresIn: Int,
-
     @JsonProperty("access_token_token_expired")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    val accessTokenExpired: LocalDateTime
+    val accessTokenExpired: LocalDateTime,
 )
 
 /**
  * 주식 일별 시세 응답 데이터 구조 (일자별 차트 형식)
  */
 data class StockPriceResponse(
-    // 헤더 정보
     @JsonProperty("output1")
     val header: StockPriceHeader? = null,
-
-    // 일자별 시세 데이터 목록
     @JsonProperty("output2")
     val priceList: List<DailyChartPrice> = emptyList(),
-
-    // API 응답 코드
     @JsonProperty("rt_cd")
-    val resultCode: String = "", // 성공 시 "0"
-
+    val resultCode: String = "",
     @JsonProperty("msg_cd")
     val messageCode: String = "",
-
     @JsonProperty("msg1")
     val message: String = "",
 )
@@ -64,22 +52,17 @@ data class StockPriceResponse(
  */
 data class StockPriceHeader(
     @JsonProperty("prdy_vrss")
-    val comparedToYesterday: String = "", // 전일 대비
-
+    val comparedToYesterday: String = "",
     @JsonProperty("prdy_vrss_sign")
-    val upDownSign: String = "", // 전일 대비 부호(1:상한, 2:상승, 3:보합, 4:하한, 5:하락)
-
+    val upDownSign: String = "",
     @JsonProperty("stck_prpr")
-    val currentPrice: String = "", // 현재가
-
+    val currentPrice: String = "",
     @JsonProperty("hts_kor_isnm")
-    val stockName: String = "", // 종목명
-
+    val stockName: String = "",
     @JsonProperty("stck_shrn_iscd")
-    val stockShortCode: String = "", // 단축 코드
-
+    val stockShortCode: String = "",
     @JsonProperty("prdy_ctrt")
-    val fluctuationRate: String = "", // 전일 대비 등락률
+    val fluctuationRate: String = "",
 )
 
 /**
@@ -87,55 +70,39 @@ data class StockPriceHeader(
  */
 data class DailyChartPrice(
     @JsonProperty("stck_bsop_date")
-    val date: String = "", // 날짜
-
+    val date: String = "",
     @JsonProperty("stck_clpr")
-    val closePrice: String = "", // 종가
-
+    val closePrice: String = "",
     @JsonProperty("stck_oprc")
-    val openPrice: String = "", // 시가
-
+    val openPrice: String = "",
     @JsonProperty("stck_hgpr")
-    val highPrice: String = "", // 고가
-
+    val highPrice: String = "",
     @JsonProperty("stck_lwpr")
-    val lowPrice: String = "", // 저가
-
+    val lowPrice: String = "",
     @JsonProperty("acml_vol")
-    val volume: String = "", // 거래량
-
+    val volume: String = "",
     @JsonProperty("acml_tr_pbmn")
-    val tradingValue: String = "", // 거래대금
-
+    val tradingValue: String = "",
     @JsonProperty("fluc_rt")
-    val fluctuationRate: String = "", // 등락률
-
+    val fluctuationRate: String = "",
     @JsonProperty("prdy_vrss_sign")
-    val upDownSign: String = "", // 전일 대비 부호
-
+    val upDownSign: String = "",
     @JsonProperty("prdy_vrss")
-    val comparedToYesterday: String = "", // 전일 대비
+    val comparedToYesterday: String = "",
 )
 
 /**
  * 주식 분봉 시세 응답 데이터 구조
  */
 data class MinuteChartResponse(
-    // 헤더 정보
     @JsonProperty("output1")
     val header: MinuteChartHeader? = null,
-
-    // 분봉 데이터 목록
     @JsonProperty("output2")
     val priceList: List<MinuteChartPrice> = emptyList(),
-
-    // API 응답 코드
     @JsonProperty("rt_cd")
-    val resultCode: String = "", // 성공 시 "0"
-
+    val resultCode: String = "",
     @JsonProperty("msg_cd")
     val messageCode: String = "",
-
     @JsonProperty("msg1")
     val message: String = "",
 )
@@ -145,28 +112,21 @@ data class MinuteChartResponse(
  */
 data class MinuteChartHeader(
     @JsonProperty("prdy_vrss")
-    val comparedToYesterday: String = "", // 전일 대비
-
+    val comparedToYesterday: String = "",
     @JsonProperty("prdy_vrss_sign")
-    val upDownSign: String = "", // 전일 대비 부호
-
+    val upDownSign: String = "",
     @JsonProperty("prdy_ctrt")
-    val fluctuationRate: String = "", // 전일 대비율
-
+    val fluctuationRate: String = "",
     @JsonProperty("stck_prdy_clpr")
-    val previousDayClosePrice: String = "", // 주식 전일 종가
-
+    val previousDayClosePrice: String = "",
     @JsonProperty("acml_vol")
-    val accumulatedVolume: String = "", // 누적 거래량
-
+    val accumulatedVolume: String = "",
     @JsonProperty("acml_tr_pbmn")
-    val accumulatedTradeAmount: String = "", // 누적 거래 대금
-
+    val accumulatedTradeAmount: String = "",
     @JsonProperty("hts_kor_isnm")
-    val stockName: String = "", // HTS 한글 종목명
-
+    val stockName: String = "",
     @JsonProperty("stck_prpr")
-    val currentPrice: String = "", // 주식 현재가
+    val currentPrice: String = "",
 )
 
 /**
@@ -174,26 +134,19 @@ data class MinuteChartHeader(
  */
 data class MinuteChartPrice(
     @JsonProperty("stck_bsop_date")
-    val date: String = "", // 주식 영업 일자
-
+    val date: String = "",
     @JsonProperty("stck_cntg_hour")
-    val time: String = "", // 주식 체결 시간
-
+    val time: String = "",
     @JsonProperty("stck_prpr")
-    val currentPrice: String = "", // 주식 현재가
-
+    val currentPrice: String = "",
     @JsonProperty("stck_oprc")
-    val openPrice: String = "", // 주식 시가
-
+    val openPrice: String = "",
     @JsonProperty("stck_hgpr")
-    val highPrice: String = "", // 주식 최고가
-
+    val highPrice: String = "",
     @JsonProperty("stck_lwpr")
-    val lowPrice: String = "", // 주식 최저가
-
+    val lowPrice: String = "",
     @JsonProperty("cntg_vol")
-    val volume: String = "", // 체결 거래량
-
+    val volume: String = "",
     @JsonProperty("acml_tr_pbmn")
-    val tradingValue: String = "", // 누적 거래 대금
+    val tradingValue: String = "",
 )

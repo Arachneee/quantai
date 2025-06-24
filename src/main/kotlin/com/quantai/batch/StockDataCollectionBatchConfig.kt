@@ -1,6 +1,11 @@
 package com.quantai.batch
 
-import com.quantai.domain.*
+import com.quantai.domain.BatchExecutionHistory
+import com.quantai.domain.BatchExecutionHistoryRepository
+import com.quantai.domain.DailyStockPrice
+import com.quantai.domain.DailyStockPriceRepository
+import com.quantai.domain.MinuteStockPrice
+import com.quantai.domain.MinuteStockPriceRepository
 import com.quantai.log.errorLog
 import com.quantai.log.logger
 import com.quantai.service.StockService
@@ -16,7 +21,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.transaction.PlatformTransactionManager
 import reactor.core.publisher.Flux
-import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -28,25 +32,22 @@ class StockDataCollectionBatchConfig(
     private val dailyStockPriceRepository: DailyStockPriceRepository,
     private val minuteStockPriceRepository: MinuteStockPriceRepository,
     private val batchExecutionHistoryRepository: BatchExecutionHistoryRepository,
-
-    ) {
+) {
     private val logger = logger()
 
     @Bean
-    fun stockDailyDataCollectionJob(): Job {
-        return JobBuilder(DAILY_JOB_NAME, jobRepository)
+    fun stockDailyDataCollectionJob(): Job =
+        JobBuilder(DAILY_JOB_NAME, jobRepository)
             .start(collectStockDailyDataStep())
             .build()
-    }
 
-    private fun collectStockDailyDataStep(): Step {
-        return StepBuilder("collectStockDailyDataStep", jobRepository)
+    private fun collectStockDailyDataStep(): Step =
+        StepBuilder("collectStockDailyDataStep", jobRepository)
             .tasklet(collectStockDailyDataTasklet(), transactionManager)
             .build()
-    }
 
-    private fun collectStockDailyDataTasklet(): Tasklet {
-        return Tasklet { _, chunkContext ->
+    private fun collectStockDailyDataTasklet(): Tasklet =
+        Tasklet { _, chunkContext ->
             val jobParameters = chunkContext.stepContext.jobParameters
             val uuid = jobParameters["uuid"] as String
             val startDateTime = LocalDateTime.now()
@@ -62,45 +63,43 @@ class StockDataCollectionBatchConfig(
 
             RepeatStatus.FINISHED
         }
-    }
 
     private fun collectAndSaveStockDailyData(): Int {
         val totalPages = (STOCK_COUNT + MAX_REQUEST_COUNT_PER_SEC - 1) / MAX_REQUEST_COUNT_PER_SEC
 
-        return Flux.range(0, totalPages)
-            .delayElements(Duration.ofMillis(1500L))
+        return Flux
+            .range(0, totalPages)
             .flatMap { page -> fetchStocksByPage(page) }
             .flatMap { fetchDailyPricesForStock(it) }
             .buffer(MAX_REQUEST_COUNT_PER_SEC * DAILY_GET_COUNT)
             .flatMap { dailyStockPriceRepository.saveAll(it) }
             .doOnNext { logger.info("Saved stock daily data for ${it.stockCode} on ${it.date}") }
             .count()
-            .block()?.toInt() ?: 0
+            .block()
+            ?.toInt() ?: 0
     }
 
-    private fun fetchDailyPricesForStock(stock: StockMarketCapDto): Flux<DailyStockPrice> {
-        return stockService.getDailyStockPrice(stock.code, dailyBatchStartDate, dailyBatchEndDate)
+    private fun fetchDailyPricesForStock(stock: StockMarketCapDto): Flux<DailyStockPrice> =
+        stockService
+            .getDailyStockPrice(stock.code, dailyBatchStartDate, dailyBatchEndDate)
             .onErrorResume { e ->
                 logger.errorLog(e) { "Error collecting stock daily data for ${stock.code}: ${e.message}" }
                 Flux.empty()
             }
-    }
 
     @Bean
-    fun stockMinuteDataCollectionJob(): Job {
-        return JobBuilder(MINUTE_JOB_NAME, jobRepository)
+    fun stockMinuteDataCollectionJob(): Job =
+        JobBuilder(MINUTE_JOB_NAME, jobRepository)
             .start(collectStockMinuteDataStep())
             .build()
-    }
 
-    private fun collectStockMinuteDataStep(): Step {
-        return StepBuilder("collectStockDailyDataStep", jobRepository)
+    private fun collectStockMinuteDataStep(): Step =
+        StepBuilder("collectStockDailyDataStep", jobRepository)
             .tasklet(collectStockMinuteDataTasklet(), transactionManager)
             .build()
-    }
 
-    private fun collectStockMinuteDataTasklet(): Tasklet {
-        return Tasklet { _, chunkContext ->
+    private fun collectStockMinuteDataTasklet(): Tasklet =
+        Tasklet { _, chunkContext ->
             val jobParameters = chunkContext.stepContext.jobParameters
             val uuid = jobParameters["uuid"] as String
             val startDateTime = LocalDateTime.now()
@@ -116,34 +115,32 @@ class StockDataCollectionBatchConfig(
 
             RepeatStatus.FINISHED
         }
-    }
 
     private fun collectAndSaveStockMinuteData(): Int {
         val totalPages = (STOCK_COUNT + MAX_REQUEST_COUNT_PER_SEC - 1) / MAX_REQUEST_COUNT_PER_SEC
 
-        return Flux.range(0, totalPages)
-            .delayElements(Duration.ofMillis(1500L))
+        return Flux
+            .range(0, totalPages)
             .flatMap { page -> fetchStocksByPage(page) }
             .flatMap { fetchMinutePricesForStock(it) }
             .buffer(MAX_REQUEST_COUNT_PER_SEC * MINUTE_GET_COUNT)
             .flatMap { minuteStockPriceRepository.saveAll(it) }
             .doOnNext { logger.info("Saved stock minute data for ${it.stockCode} on ${it.date}") }
             .count()
-            .block()?.toInt() ?: 0
+            .block()
+            ?.toInt() ?: 0
     }
 
-
-    private fun fetchMinutePricesForStock(stock: StockMarketCapDto): Flux<MinuteStockPrice> {
-        return stockService.getDailyMinuteChart(
-            stock.code,
-            minuteBatchEndDateTime.toLocalDate(),
-            minuteBatchEndDateTime
-        )
-            .onErrorResume { e ->
+    private fun fetchMinutePricesForStock(stock: StockMarketCapDto): Flux<MinuteStockPrice> =
+        stockService
+            .getDailyMinuteChart(
+                stock.code,
+                minuteBatchEndDateTime.toLocalDate(),
+                minuteBatchEndDateTime,
+            ).onErrorResume { e ->
                 logger.errorLog(e) { "Error collecting stock data for ${stock.code}: ${e.message}" }
                 Flux.empty()
             }
-    }
 
     private fun fetchStocksByPage(page: Int): Flux<StockMarketCapDto> {
         val remainStocks = STOCK_COUNT - MAX_REQUEST_COUNT_PER_SEC * page
@@ -157,21 +154,22 @@ class StockDataCollectionBatchConfig(
         startTime: LocalDateTime,
         status: String,
         stockCount: Int,
-        errorMessage: String? = null
+        errorMessage: String? = null,
     ) {
-        batchExecutionHistoryRepository.save(
-            BatchExecutionHistory(
-                uuid = uuid,
-                jobName = jobName,
-                status = status,
-                startTime = startTime,
-                endTime = LocalDateTime.now(),
-                dataStartDate = dailyBatchStartDate,
-                dataEndDate = dailyBatchEndDate,
-                stockCount = stockCount,
-                errorMessage = errorMessage
-            )
-        ).block()
+        batchExecutionHistoryRepository
+            .save(
+                BatchExecutionHistory(
+                    uuid = uuid,
+                    jobName = jobName,
+                    status = status,
+                    startTime = startTime,
+                    endTime = LocalDateTime.now(),
+                    dataStartDate = dailyBatchStartDate,
+                    dataEndDate = dailyBatchEndDate,
+                    stockCount = stockCount,
+                    errorMessage = errorMessage,
+                ),
+            ).block()
     }
 
     private fun updateDateRange() {

@@ -14,25 +14,21 @@ import java.time.format.DateTimeFormatter
 data class DailyStockPrice(
     @Id
     val id: String? = null,
-
     @Indexed
-    val stockCode: String, // 종목 코드
-
+    val stockCode: String,
     @Indexed
-    val date: LocalDate, // 날짜
-
-    val closePrice: Double, // 종가
-    val openPrice: Double, // 시가
-    val highPrice: Double, // 고가
-    val lowPrice: Double, // 저가
-    val volume: Long, // 거래량
-    val tradingValue: Long, // 거래대금
-    val fluctuationRate: Double, // 등락률
-    val upDownSign: String, // 전일 대비 부호
-    val comparedToYesterday: Double, // 전일 대비
-
+    val date: LocalDate,
+    val closePrice: Double,
+    val openPrice: Double,
+    val highPrice: Double,
+    val lowPrice: Double,
+    val volume: Long,
+    val tradingValue: Long,
+    val fluctuationRate: Double,
+    val upDownSign: String,
+    val comparedToYesterday: Double,
     val createdAt: LocalDateTime = LocalDateTime.now(),
-    val updatedAt: LocalDateTime = LocalDateTime.now()
+    val updatedAt: LocalDateTime = LocalDateTime.now(),
 ) {
     companion object {
         private fun parseDate(dateStr: String): LocalDate {
@@ -40,24 +36,25 @@ data class DailyStockPrice(
             return LocalDate.parse(dateStr, formatter)
         }
 
-        private fun parseDouble(value: String): Double {
-            return try {
+        private fun parseDouble(value: String): Double =
+            try {
                 value.replace(",", "").toDouble()
             } catch (e: Exception) {
                 0.0
             }
-        }
 
-        private fun parseLong(value: String): Long {
-            return try {
+        private fun parseLong(value: String): Long =
+            try {
                 value.replace(",", "").toLong()
             } catch (e: Exception) {
                 0L
             }
-        }
 
-        fun from(dailyChartPrice: DailyChartPrice, stockCode: String): DailyStockPrice {
-            return DailyStockPrice(
+        fun from(
+            dailyChartPrice: DailyChartPrice,
+            stockCode: String,
+        ): DailyStockPrice =
+            DailyStockPrice(
                 id = "${stockCode}_${dailyChartPrice.date}",
                 stockCode = stockCode,
                 date = parseDate(dailyChartPrice.date),
@@ -69,8 +66,7 @@ data class DailyStockPrice(
                 tradingValue = parseLong(dailyChartPrice.tradingValue),
                 fluctuationRate = parseDouble(dailyChartPrice.fluctuationRate),
                 upDownSign = dailyChartPrice.upDownSign,
-                comparedToYesterday = parseDouble(dailyChartPrice.comparedToYesterday)
+                comparedToYesterday = parseDouble(dailyChartPrice.comparedToYesterday),
             )
-        }
     }
 }

@@ -18,41 +18,31 @@ import java.time.format.DateTimeFormatter
  */
 @Document(collection = "minute_stock_prices")
 @CompoundIndexes(
-    CompoundIndex(name = "stock_date_time_idx", def = "{'stockCode': 1, 'date': 1, 'time': 1}", unique = true)
+    CompoundIndex(name = "stock_date_time_idx", def = "{'stockCode': 1, 'date': 1, 'time': 1}", unique = true),
 )
 data class MinuteStockPrice(
     @Id
     val id: String? = null,
-
     @Field("stock_code")
     val stockCode: String,
-
     @Field("date")
     val date: LocalDate,
-
     @Field("time")
     val time: LocalTime,
-
     @Field("current_price")
     val currentPrice: BigDecimal,
-
     @Field("open_price")
     val openPrice: BigDecimal,
-
     @Field("high_price")
     val highPrice: BigDecimal,
-
     @Field("low_price")
     val lowPrice: BigDecimal,
-
     @Field("volume")
     val volume: Long,
-
     @Field("trading_value")
     val tradingValue: Long,
-
     @Field("created_at")
-    val createdAt: LocalDateTime = LocalDateTime.now()
+    val createdAt: LocalDateTime = LocalDateTime.now(),
 ) {
     companion object {
         private val dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
@@ -61,7 +51,10 @@ data class MinuteStockPrice(
         /**
          * API 응답의 MinuteChartPrice DTO를 도메인 객체로 변환
          */
-        fun from(dto: MinuteChartPrice, stockCode: String): MinuteStockPrice {
+        fun from(
+            dto: MinuteChartPrice,
+            stockCode: String,
+        ): MinuteStockPrice {
             val date = LocalDate.parse(dto.date, dateFormatter)
             val time = LocalTime.parse(dto.time, timeFormatter)
 
@@ -78,7 +71,7 @@ data class MinuteStockPrice(
                 highPrice = BigDecimal(dto.highPrice),
                 lowPrice = BigDecimal(dto.lowPrice),
                 volume = dto.volume.toLong(),
-                tradingValue = dto.tradingValue.toLong()
+                tradingValue = dto.tradingValue.toLong(),
             )
         }
     }

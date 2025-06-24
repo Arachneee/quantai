@@ -22,13 +22,13 @@ data class MongoProperties(
     val readPreference: String = "primary",
     val writeConcern: WriteConcernProperties = WriteConcernProperties(),
     val retry: RetryProperties = RetryProperties(),
-    val heartbeat: HeartbeatProperties = HeartbeatProperties()
+    val heartbeat: HeartbeatProperties = HeartbeatProperties(),
 ) {
     data class ConnectionProperties(
         val pool: PoolProperties = PoolProperties(),
         val socketTimeout: Duration = Duration.ofSeconds(5),
         val connectTimeout: Duration = Duration.ofSeconds(10),
-        val serverSelectionTimeout: Duration = Duration.ofSeconds(15)
+        val serverSelectionTimeout: Duration = Duration.ofSeconds(15),
     )
 
     data class PoolProperties(
@@ -36,32 +36,31 @@ data class MongoProperties(
         val minSize: Int = 5,
         val maxWaitTime: Duration = Duration.ofSeconds(15),
         val maxConnectionLifeTime: Duration = Duration.ofSeconds(60),
-        val maxConnectionIdleTime: Duration = Duration.ofSeconds(30)
+        val maxConnectionIdleTime: Duration = Duration.ofSeconds(30),
     )
 
     data class WriteConcernProperties(
         val w: String = "majority",
         val journal: Boolean = true,
-        val timeout: Duration = Duration.ofSeconds(5)
+        val timeout: Duration = Duration.ofSeconds(5),
     )
 
     data class RetryProperties(
         val writes: Boolean = true,
-        val reads: Boolean = true
+        val reads: Boolean = true,
     )
 
     data class HeartbeatProperties(
         val frequency: Duration = Duration.ofSeconds(10),
-        val minFrequency: Duration = Duration.ofMillis(500)
+        val minFrequency: Duration = Duration.ofMillis(500),
     )
 }
 
 @Configuration
 @EnableConfigurationProperties(MongoProperties::class)
 class MongoConfig(
-    private val mongoProperties: MongoProperties
+    private val mongoProperties: MongoProperties,
 ) : AbstractReactiveMongoConfiguration() {
-
     @Value("\${spring.data.mongodb.uri}")
     private lateinit var connectionString: String
 
@@ -70,31 +69,32 @@ class MongoConfig(
 
     @Bean
     override fun reactiveMongoClient(): MongoClient {
-        val settings = MongoClientSettings.builder()
-            .applyConnectionString(ConnectionString(connectionString))
-            .applyToConnectionPoolSettings { builder ->
-                val pool = mongoProperties.connection.pool
-                builder.maxSize(pool.maxSize)
-                    .minSize(pool.minSize)
-                    .maxWaitTime(pool.maxWaitTime.toMillis(), TimeUnit.MILLISECONDS)
-                    .maxConnectionLifeTime(pool.maxConnectionLifeTime.toMillis(), TimeUnit.MILLISECONDS)
-                    .maxConnectionIdleTime(pool.maxConnectionIdleTime.toMillis(), TimeUnit.MILLISECONDS)
-            }
-            .applyToSocketSettings { builder ->
-                val conn = mongoProperties.connection
-                builder.connectTimeout(conn.connectTimeout.toMillis().toLong(), TimeUnit.MILLISECONDS)
-                    .readTimeout(conn.socketTimeout.toMillis().toLong(), TimeUnit.MILLISECONDS)
-            }
-            .applyToServerSettings { builder ->
-                val heartbeat = mongoProperties.heartbeat
-                builder.heartbeatFrequency(heartbeat.frequency.toMillis(), TimeUnit.MILLISECONDS)
-                    .minHeartbeatFrequency(heartbeat.minFrequency.toMillis(), TimeUnit.MILLISECONDS)
-            }
-            .readPreference(getReadPreference())
-            .writeConcern(getWriteConcern())
-            .retryWrites(mongoProperties.retry.writes)
-            .retryReads(mongoProperties.retry.reads)
-            .build()
+        val settings =
+            MongoClientSettings.builder()
+                .applyConnectionString(ConnectionString(connectionString))
+                .applyToConnectionPoolSettings { builder ->
+                    val pool = mongoProperties.connection.pool
+                    builder.maxSize(pool.maxSize)
+                        .minSize(pool.minSize)
+                        .maxWaitTime(pool.maxWaitTime.toMillis(), TimeUnit.MILLISECONDS)
+                        .maxConnectionLifeTime(pool.maxConnectionLifeTime.toMillis(), TimeUnit.MILLISECONDS)
+                        .maxConnectionIdleTime(pool.maxConnectionIdleTime.toMillis(), TimeUnit.MILLISECONDS)
+                }
+                .applyToSocketSettings { builder ->
+                    val conn = mongoProperties.connection
+                    builder.connectTimeout(conn.connectTimeout.toMillis().toLong(), TimeUnit.MILLISECONDS)
+                        .readTimeout(conn.socketTimeout.toMillis().toLong(), TimeUnit.MILLISECONDS)
+                }
+                .applyToServerSettings { builder ->
+                    val heartbeat = mongoProperties.heartbeat
+                    builder.heartbeatFrequency(heartbeat.frequency.toMillis(), TimeUnit.MILLISECONDS)
+                        .minHeartbeatFrequency(heartbeat.minFrequency.toMillis(), TimeUnit.MILLISECONDS)
+                }
+                .readPreference(getReadPreference())
+                .writeConcern(getWriteConcern())
+                .retryWrites(mongoProperties.retry.writes)
+                .retryReads(mongoProperties.retry.reads)
+                .build()
 
         return MongoClients.create(settings)
     }

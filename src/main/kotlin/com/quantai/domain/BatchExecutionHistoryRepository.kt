@@ -8,5 +8,9 @@ import java.time.LocalDateTime
 @Repository
 interface BatchExecutionHistoryRepository : ReactiveMongoRepository<BatchExecutionHistory, String> {
     fun findByJobNameOrderByEndTimeDesc(jobName: String): Flux<BatchExecutionHistory>
-    fun findByStartTimeBetween(start: LocalDateTime, end: LocalDateTime): Flux<BatchExecutionHistory>
+
+    fun findByStartTimeBetween(
+        start: LocalDateTime,
+        end: LocalDateTime,
+    ): Flux<BatchExecutionHistory>
 }

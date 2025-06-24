@@ -10,13 +10,11 @@ import javax.sql.DataSource
 @Configuration
 @EnableBatchProcessing
 class BatchConfig {
-
     @Bean
-    fun dataSource(): DataSource {
-        return EmbeddedDatabaseBuilder()
+    fun dataSource(): DataSource =
+        EmbeddedDatabaseBuilder()
             .setType(EmbeddedDatabaseType.H2)
             .addScript("classpath:org/springframework/batch/core/schema-h2.sql")
             .generateUniqueName(true)
             .build()
-    }
 }

@@ -10,4 +10,4 @@ import org.springframework.web.reactive.function.client.WebClient
 class KisMockClient(
     private val webClientBuilder: WebClient.Builder,
     private val properties: KisMockClientProperties,
-) : KisClient(webClientBuilder, properties) {}
+) : KisClient(webClientBuilder, properties)

@@ -17,7 +17,6 @@ class KisRealClient(
     private val webClientBuilder: WebClient.Builder,
     private val properties: KisRealClientProperties,
 ) : KisClient(webClientBuilder, properties) {
-
     // 시간 포맷을 위한 formatter 추가
     private val timeFormatter = DateTimeFormatter.ofPattern("HHmmss")
 
@@ -32,12 +31,14 @@ class KisRealClient(
         stockCode: String,
         startDate: LocalDate,
         endDate: LocalDate = LocalDate.now(),
-        adjustedPrice: String = "N"
-    ): Mono<StockPriceResponse> {
-        return getAccessToken().flatMap { token ->
-            webClient.get()
+        adjustedPrice: String = "N",
+    ): Mono<StockPriceResponse> =
+        getAccessToken().flatMap { token ->
+            webClient
+                .get()
                 .uri { builder ->
-                    builder.path("/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice")
+                    builder
+                        .path("/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice")
                         .queryParam("FID_COND_MRKT_DIV_CODE", "J") // 시장 구분
                         .queryParam("FID_INPUT_ISCD", stockCode) // 종목코드
                         .queryParam("FID_INPUT_DATE_1", startDate.format(dateFormatter)) // 시작일자
@@ -45,8 +46,7 @@ class KisRealClient(
                         .queryParam("FID_PERIOD_DIV_CODE", "D") // 기간분류코드(D:일, W:주, M:월)
                         .queryParam("FID_ORG_ADJ_PRC", adjustedPrice) // 수정주가 여부(Y/N)
                         .build()
-                }
-                .header("authorization", "Bearer $token")
+                }.header("authorization", "Bearer $token")
                 .header("appkey", properties.appKey)
                 .header("appsecret", properties.appSecret)
                 .header("tr_id", "FHKST03010100") // 일자별 주식 시세 TR ID
@@ -57,7 +57,6 @@ class KisRealClient(
                     logger.error("일별 시세 조회 중 오류 발생: ${error.message}", error)
                 }
         }
-    }
 
     /**
      * 주식일별분봉조회 API (FHKST03010230)
@@ -75,15 +74,17 @@ class KisRealClient(
         date: LocalDate,
         time: LocalDateTime? = null,
         includePastData: String = "Y",
-        includeFakeTick: String = "N"
+        includeFakeTick: String = "N",
     ): Mono<MinuteChartResponse> {
         // time이 null이면 현재 시간을 사용, 아니면 입력된 시간을 사용
         val formattedTime = time?.format(timeFormatter) ?: LocalDateTime.now().format(timeFormatter)
 
         return getAccessToken().flatMap { token ->
-            webClient.get()
+            webClient
+                .get()
                 .uri { builder ->
-                    builder.path("/uapi/domestic-stock/v1/quotations/inquire-time-dailychartprice")
+                    builder
+                        .path("/uapi/domestic-stock/v1/quotations/inquire-time-dailychartprice")
                         .queryParam("FID_COND_MRKT_DIV_CODE", "J") // 시장 구분 (J: KRX)
                         .queryParam("FID_INPUT_ISCD", stockCode) // 종목코드
                         .queryParam("FID_INPUT_DATE_1", date.format(dateFormatter)) // 조회 날짜
@@ -91,8 +92,7 @@ class KisRealClient(
                         .queryParam("FID_PW_DATA_INCU_YN", includePastData) // 과거 데이터 포함 여부
                         .queryParam("FID_FAKE_TICK_INCU_YN", includeFakeTick) // 허봉 포함 여부
                         .build()
-                }
-                .header("authorization", "Bearer $token")
+                }.header("authorization", "Bearer $token")
                 .header("appkey", properties.appKey)
                 .header("appsecret", properties.appSecret)
                 .header("tr_id", "FHKST03010230") // 주식일별분봉조회 TR ID

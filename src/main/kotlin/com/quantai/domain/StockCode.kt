@@ -16,20 +16,13 @@ import java.time.LocalDateTime
 data class StockCode(
     @Id
     val id: String? = null,
-
     @Indexed(unique = true)
     val code: String,
-
     val marketType: MarketType? = null,
-
     val name: String? = null,
-
     val standardCode: String? = null,
-
     @Indexed(direction = IndexDirection.DESCENDING)
     val marketCap: Int? = null,
-
     val additionalAttributes: MutableMap<String, String> = mutableMapOf(),
-
-    val lastUpdated: LocalDateTime = LocalDateTime.now()
+    val lastUpdated: LocalDateTime = LocalDateTime.now(),
 )
