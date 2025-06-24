@@ -77,7 +77,6 @@ class StockDataCollectionBatchConfig(
             .doOnNext { logger.debug("Collecting stock data: ${it.code} - ${it.marketCap}") }
             .flatMap { fetchDailyPricesForStock(it) }
             .doOnNext { logger.debug("Fetched daily price for ${it.stockCode} on ${it.date}") }
-            .filterWhen { isNewStockPrice(it) }
             .buffer(BATCH_SIZE)
             .flatMap { dailyStockPriceRepository.saveAll(it) }
             .doOnNext { logger.info("Saved stock data for ${it.stockCode} on ${it.date}") }
@@ -90,9 +89,6 @@ class StockDataCollectionBatchConfig(
         val limit = remainStocks.coerceAtMost(BATCH_SIZE)
         return stockService.getMarketCapTop(page, limit)
     }
-
-    private fun isNewStockPrice(price: DailyStockPrice) =
-        dailyStockPriceRepository.existsByStockCodeAndDate(price.stockCode, price.date).map(Boolean::not)
 
     private fun fetchDailyPricesForStock(stock: StockMarketCapDto): Flux<DailyStockPrice> {
         return stockService.getDailyStockPrice(stock.code, startDate, endDate)

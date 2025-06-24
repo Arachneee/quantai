@@ -58,6 +58,7 @@ data class DailyStockPrice(
 
         fun from(dailyChartPrice: DailyChartPrice, stockCode: String): DailyStockPrice {
             return DailyStockPrice(
+                id = "${stockCode}_${dailyChartPrice.date}",
                 stockCode = stockCode,
                 date = parseDate(dailyChartPrice.date),
                 closePrice = parseDouble(dailyChartPrice.closePrice),
