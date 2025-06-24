@@ -14,17 +14,28 @@ import java.util.*
 @EnableScheduling
 class BatchScheduler(
     private val jobLauncher: JobLauncher,
-    private val stockDataCollectionJob: Job
+    private val stockDailyDataCollectionJob: Job,
+    private val stockMinuteDataCollectionJob: Job
 ) {
     private val logger = logger()
 
     @Scheduled(cron = "0 47 0 * * *")
-    fun runPreviousStockDataCollectionJob() {
+    fun runPreviousStockDailyDataCollectionJob() {
         val jobParameters = JobParametersBuilder()
             .addString("uuid", UUID.randomUUID().toString())
             .toJobParameters()
 
         logger.info("과거 주식 일봉 데이터 수집 배치 작업 시작: ${LocalDateTime.now()}")
-        jobLauncher.run(stockDataCollectionJob, jobParameters)
+        jobLauncher.run(stockDailyDataCollectionJob, jobParameters)
+    }
+
+    @Scheduled(cron = "0 52 21 * * *")
+    fun runPreviousStockMinuteDataCollectionJob() {
+        val jobParameters = JobParametersBuilder()
+            .addString("uuid", UUID.randomUUID().toString())
+            .toJobParameters()
+
+        logger.info("과거 주식 분봉 데이터 수집 배치 작업 시작: ${LocalDateTime.now()}")
+        jobLauncher.run(stockMinuteDataCollectionJob, jobParameters)
     }
 }
