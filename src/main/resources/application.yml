@@ -62,19 +62,10 @@ kis-client-mock:
   port: 29443
   appKey: ${KIS_MOCK_APP_KEY:MISSING_APP_KEY}
   appSecret: ${KIS_MOCK_APP_SECRET:MISSING_APP_SECRET}
+  delayDuration: PT0.5S
 kis-client-real:
   host: https://openapi.koreainvestment.com
   port: 9443
   appKey: ${KIS_APP_KEY:MISSING_APP_KEY}
   appSecret: ${KIS_APP_SECRET:MISSING_APP_SECRET}
-
-stock:
-  batch:
-    cron: "0 0 18 * * MON-FRI"
-    pageSize: 100
-    stockCodes:
-      - "005930"
-      - "000660"
-      - "035420"
-      - "035720"
-      - "005380"
+  delayDuration: PT50MS

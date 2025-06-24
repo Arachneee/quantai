@@ -1,6 +1,7 @@
 package com.quantai.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import java.time.Duration
 
 @ConfigurationProperties(prefix = "kis-client-mock")
 data class KisMockClientProperties(
@@ -8,6 +9,7 @@ data class KisMockClientProperties(
     override val port: Int,
     override val appKey: String,
     override val appSecret: String,
+    override val delayDuration: Duration,
 ) : KisClientProperties
 
 @ConfigurationProperties(prefix = "kis-client-real")
@@ -16,6 +18,7 @@ data class KisRealClientProperties(
     override val port: Int,
     override val appKey: String,
     override val appSecret: String,
+    override val delayDuration: Duration,
 ) : KisClientProperties
 
 interface KisClientProperties {
@@ -23,4 +26,5 @@ interface KisClientProperties {
     val port: Int
     val appKey: String
     val appSecret: String
+    val delayDuration: Duration
 }

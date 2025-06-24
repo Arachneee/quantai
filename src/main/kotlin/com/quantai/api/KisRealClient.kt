@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter
 @EnableConfigurationProperties(KisRealClientProperties::class)
 class KisRealClient(
     private val webClientBuilder: WebClient.Builder,
-    private val properties: KisRealClientProperties
+    private val properties: KisRealClientProperties,
 ) : KisClient(webClientBuilder, properties) {
 
     // 시간 포맷을 위한 formatter 추가

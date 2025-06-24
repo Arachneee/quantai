@@ -1,7 +1,7 @@
 package com.quantai.api
 
 import com.quantai.api.dto.TokenResponse
-import com.quantai.config.KisClientMockProperties
+import com.quantai.config.KisMockClientProperties
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -11,20 +11,18 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec
-import org.springframework.web.reactive.function.client.WebClient.RequestBodyUriSpec
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec
+import org.springframework.web.reactive.function.client.WebClient.*
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
+import java.time.LocalDateTime
 
 @ExtendWith(MockKExtension::class)
 class KisApiMockClientTest {
-
     @MockK
     lateinit var webClientBuilder: WebClient.Builder
 
     @MockK
-    lateinit var properties: KisClientMockProperties
+    lateinit var properties: KisMockClientProperties
 
     @MockK
     lateinit var webClient: WebClient
@@ -68,7 +66,8 @@ class KisApiMockClientTest {
         val tokenResponse = TokenResponse(
             accessToken = expectedToken,
             tokenType = "Bearer",
-            expiresIn = 86400
+            expiresIn = 86400,
+            accessTokenExpired = LocalDateTime.now().plusDays(1)
         )
 
         every { responseSpec.bodyToMono(TokenResponse::class.java) } returns Mono.just(tokenResponse)
@@ -94,7 +93,8 @@ class KisApiMockClientTest {
         val tokenResponse = TokenResponse(
             accessToken = expectedToken,
             tokenType = "Bearer",
-            expiresIn = 86400
+            expiresIn = 86400,
+            accessTokenExpired = LocalDateTime.now().plusDays(1),
         )
 
         every { responseSpec.bodyToMono(TokenResponse::class.java) } returns Mono.just(tokenResponse)

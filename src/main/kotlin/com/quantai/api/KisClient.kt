@@ -4,11 +4,18 @@ import com.quantai.api.dto.TokenRequest
 import com.quantai.api.dto.TokenResponse
 import com.quantai.config.KisClientProperties
 import com.quantai.log.logger
+import com.quantai.api.dto.QueuedApiRequest
+import com.quantai.log.errorLog
 import jakarta.annotation.PostConstruct
+import jakarta.annotation.PreDestroy
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyInserters
+import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
+import reactor.core.publisher.Sinks
+import reactor.core.scheduler.Schedulers
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
@@ -18,10 +25,14 @@ abstract class KisClient(
     private val properties: KisClientProperties,
 ) {
     protected val logger = logger()
+    protected lateinit var webClient: WebClient
+    protected val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+
     private val tokenRef = AtomicReference<String>(null)
     private val tokenExpired = AtomicReference<LocalDateTime>(null)
-    protected val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-    protected lateinit var webClient: WebClient
+
+    private val requestSink: Sinks.Many<QueuedApiRequest> =
+        Sinks.many().unicast().onBackpressureBuffer<QueuedApiRequest>()
 
     @PostConstruct
     fun initialize() {
@@ -31,11 +42,61 @@ abstract class KisClient(
             properties.host
         }
 
+        initRateLimiterQueue()
+
         webClient = webClientBuilder
             .baseUrl(baseUrl)
+            .filter { request, next ->
+                Mono.create<ClientResponse> { sink ->
+                    enqueueRequest(
+                        QueuedApiRequest(request, next, sink)
+                    )
+                }
+            }
             .build()
 
         logger.info("KIS API Client initialized with baseUrl: $baseUrl")
+    }
+
+    @PreDestroy
+    fun shutdown() {
+        requestSink.tryEmitComplete()
+        logger.info("Request queue consumer shut down.")
+    }
+
+    private fun initRateLimiterQueue() {
+        requestSink.asFlux()
+            .delayElements(properties.delayDuration, Schedulers.boundedElastic())
+            .doOnNext { request -> logger.info("Processing queued request: ${request.clientRequest.url()}") }
+            .subscribe(
+                { queuedRequest ->
+                    queuedRequest.nextExchange.exchange(queuedRequest.clientRequest)
+                        .subscribe(
+                            { clientResponse ->
+                                queuedRequest.responseSink.success(clientResponse)
+                            },
+                            { error ->
+                                queuedRequest.responseSink.error(error)
+                            }
+                        )
+                },
+                { error ->
+                    logger.error("Error in queue consumer: ${error.message}")
+                },
+                {
+                    logger.info("Request queue consumer completed.")
+                }
+            )
+    }
+
+    private fun enqueueRequest(request: QueuedApiRequest) {
+        val result = requestSink.tryEmitNext(request)
+        if (result.isSuccess) {
+            logger.info("Enqueued request: ${request.clientRequest.url()}")
+        } else {
+            logger.error("Failed to enqueue request: $result for ${request.clientRequest.url()}")
+            request.responseSink.error(RuntimeException("Failed to enqueue request: $result"))
+        }
     }
 
     fun getAccessToken(): Mono<String> {

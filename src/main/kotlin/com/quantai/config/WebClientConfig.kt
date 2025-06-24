@@ -44,13 +44,12 @@ class WebClientConfig(private val properties: WebClientProperties) {
     private val logger = logger()
 
     @Bean
-    fun webClient(builder: WebClient.Builder): WebClient =
+    fun webClientBuilder(builder: WebClient.Builder): WebClient.Builder =
         builder
             .clientConnector(createReactorClientConnector())
             .exchangeStrategies(createExchangeStrategies())
             .filter(logRequest())
             .filter(logResponse())
-            .build()
 
     private fun createReactorClientConnector(): ReactorClientHttpConnector = ReactorClientHttpConnector(createHttpClient())
 
