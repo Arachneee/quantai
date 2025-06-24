@@ -116,3 +116,84 @@ data class DailyChartPrice(
     @JsonProperty("prdy_vrss")
     val comparedToYesterday: String = "", // 전일 대비
 )
+
+/**
+ * 주식 분봉 시세 응답 데이터 구조
+ */
+data class MinuteChartResponse(
+    // 헤더 정보
+    @JsonProperty("output1")
+    val header: MinuteChartHeader? = null,
+
+    // 분봉 데이터 목록
+    @JsonProperty("output2")
+    val priceList: List<MinuteChartPrice> = emptyList(),
+
+    // API 응답 코드
+    @JsonProperty("rt_cd")
+    val resultCode: String = "", // 성공 시 "0"
+
+    @JsonProperty("msg_cd")
+    val messageCode: String = "",
+
+    @JsonProperty("msg1")
+    val message: String = "",
+)
+
+/**
+ * 주식 분봉 시세 헤더 정보
+ */
+data class MinuteChartHeader(
+    @JsonProperty("prdy_vrss")
+    val comparedToYesterday: String = "", // 전일 대비
+
+    @JsonProperty("prdy_vrss_sign")
+    val upDownSign: String = "", // 전일 대비 부호
+
+    @JsonProperty("prdy_ctrt")
+    val fluctuationRate: String = "", // 전일 대비율
+
+    @JsonProperty("stck_prdy_clpr")
+    val previousDayClosePrice: String = "", // 주식 전일 종가
+
+    @JsonProperty("acml_vol")
+    val accumulatedVolume: String = "", // 누적 거래량
+
+    @JsonProperty("acml_tr_pbmn")
+    val accumulatedTradeAmount: String = "", // 누적 거래 대금
+
+    @JsonProperty("hts_kor_isnm")
+    val stockName: String = "", // HTS 한글 종목명
+
+    @JsonProperty("stck_prpr")
+    val currentPrice: String = "", // 주식 현재가
+)
+
+/**
+ * 분봉 데이터 정보
+ */
+data class MinuteChartPrice(
+    @JsonProperty("stck_bsop_date")
+    val date: String = "", // 주식 영업 일자
+
+    @JsonProperty("stck_cntg_hour")
+    val time: String = "", // 주식 체결 시간
+
+    @JsonProperty("stck_prpr")
+    val currentPrice: String = "", // 주식 현재가
+
+    @JsonProperty("stck_oprc")
+    val openPrice: String = "", // 주식 시가
+
+    @JsonProperty("stck_hgpr")
+    val highPrice: String = "", // 주식 최고가
+
+    @JsonProperty("stck_lwpr")
+    val lowPrice: String = "", // 주식 최저가
+
+    @JsonProperty("cntg_vol")
+    val volume: String = "", // 체결 거래량
+
+    @JsonProperty("acml_tr_pbmn")
+    val tradingValue: String = "", // 누적 거래 대금
+)

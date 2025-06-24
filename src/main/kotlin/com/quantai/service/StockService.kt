@@ -3,6 +3,7 @@ package com.quantai.service
 import com.quantai.api.KisMockClient
 import com.quantai.api.KisRealClient
 import com.quantai.domain.DailyStockPrice
+import com.quantai.domain.MinuteStockPrice
 import com.quantai.domain.StockCodeRepository
 import com.quantai.domain.findMarketCapTop
 import com.quantai.log.logger
@@ -11,6 +12,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Service
 class StockService(
@@ -55,5 +57,36 @@ class StockService(
         return stockCodeRepository.findMarketCapTop(pageRequest)
             .map { StockMarketCapDto.from(it) }
     }
-}
 
+    /**
+     * 특정 일자의 분봉 데이터를 조회합니다.
+     *
+     * @param stockCode 종목 코드 (예: 삼성전자 "005930")
+     * @param date 조회할 날짜 (기본값: 오늘)
+     * @param time 조회할 시간 (기본값: 현재 시간)
+     * @param includePastData 과거 데이터 포함 여부 (기본값: "Y")
+     * @param includeFakeTick 허봉 포함 여부 (기본값: "N")
+     * @return 분봉 데이터
+     */
+    fun getDailyMinuteChart(
+        stockCode: String,
+        date: LocalDate = LocalDate.now(),
+        time: LocalDateTime? = null,
+        includePastData: String = "Y",
+        includeFakeTick: String = "N"
+    ): Flux<MinuteStockPrice> {
+        logger.info("분봉 데이터 조회 요청 - 종목: $stockCode, 날짜: $date, 시간: $time")
+
+        return kisRealClient.getDailyMinuteChart(stockCode, date, time, includePastData, includeFakeTick)
+            .filter { it.resultCode == "0" }
+            .flatMapMany { response ->
+                logger.info("분봉 데이터 응답 성공 - 종목: $stockCode, 응답 코드: ${response.resultCode}")
+
+                Flux.fromIterable(response.priceList)
+                    .map { MinuteStockPrice.from(it, stockCode) }
+            }
+            .doOnError { error ->
+                logger.error("분봉 데이터 조회 오류 - 종목: $stockCode, 오류: ${error.message}", error)
+            }
+    }
+}
