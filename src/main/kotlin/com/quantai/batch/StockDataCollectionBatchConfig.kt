@@ -17,6 +17,7 @@ import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.builder.StepBuilder
 import org.springframework.batch.core.step.tasklet.Tasklet
 import org.springframework.batch.repeat.RepeatStatus
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.transaction.PlatformTransactionManager
@@ -34,6 +35,9 @@ class StockDataCollectionBatchConfig(
     private val batchExecutionHistoryRepository: BatchExecutionHistoryRepository,
 ) {
     private val logger = logger()
+
+    @Value("\${kis-client-real.maxRequestCountPerSec}")
+    private var maxRequestCountPerSec: Int = 20
 
     @Bean
     fun stockDailyDataCollectionJob(): Job =
@@ -64,20 +68,14 @@ class StockDataCollectionBatchConfig(
             RepeatStatus.FINISHED
         }
 
-    private fun collectAndSaveStockDailyData(): Int {
-        val totalPages = (STOCK_COUNT + MAX_REQUEST_COUNT_PER_SEC - 1) / MAX_REQUEST_COUNT_PER_SEC
-
-        return Flux
-            .range(0, totalPages)
-            .flatMap { page -> fetchStocksByPage(page) }
+    private fun collectAndSaveStockDailyData(): Int =
+        getStockMarketCap()
             .flatMap { fetchDailyPricesForStock(it) }
-            .buffer(MAX_REQUEST_COUNT_PER_SEC * DAILY_GET_COUNT)
+            .buffer(maxRequestCountPerSec * DAILY_GET_COUNT)
             .flatMap { dailyStockPriceRepository.saveAll(it) }
-            .doOnNext { logger.info("Saved stock daily data for ${it.stockCode} on ${it.date}") }
             .count()
             .block()
             ?.toInt() ?: 0
-    }
 
     private fun fetchDailyPricesForStock(stock: StockMarketCapDto): Flux<DailyStockPrice> =
         stockService
@@ -116,20 +114,14 @@ class StockDataCollectionBatchConfig(
             RepeatStatus.FINISHED
         }
 
-    private fun collectAndSaveStockMinuteData(): Int {
-        val totalPages = (STOCK_COUNT + MAX_REQUEST_COUNT_PER_SEC - 1) / MAX_REQUEST_COUNT_PER_SEC
-
-        return Flux
-            .range(0, totalPages)
-            .flatMap { page -> fetchStocksByPage(page) }
+    private fun collectAndSaveStockMinuteData(): Int =
+        getStockMarketCap()
             .flatMap { fetchMinutePricesForStock(it) }
-            .buffer(MAX_REQUEST_COUNT_PER_SEC * MINUTE_GET_COUNT)
+            .buffer(maxRequestCountPerSec * MINUTE_GET_COUNT)
             .flatMap { minuteStockPriceRepository.saveAll(it) }
-            .doOnNext { logger.info("Saved stock minute data for ${it.stockCode} on ${it.date}") }
             .count()
             .block()
             ?.toInt() ?: 0
-    }
 
     private fun fetchMinutePricesForStock(stock: StockMarketCapDto): Flux<MinuteStockPrice> =
         stockService
@@ -142,10 +134,16 @@ class StockDataCollectionBatchConfig(
                 Flux.empty()
             }
 
-    private fun fetchStocksByPage(page: Int): Flux<StockMarketCapDto> {
-        val remainStocks = STOCK_COUNT - MAX_REQUEST_COUNT_PER_SEC * page
-        val limit = remainStocks.coerceAtMost(MAX_REQUEST_COUNT_PER_SEC)
-        return stockService.getMarketCapTop(page, limit)
+    private fun getStockMarketCap(): Flux<StockMarketCapDto> {
+        val totalPages = (STOCK_TOTAL_COUNT + maxRequestCountPerSec - 1) / maxRequestCountPerSec
+
+        return Flux
+            .range(0, totalPages)
+            .flatMap { page ->
+                val remainStocks = STOCK_TOTAL_COUNT - maxRequestCountPerSec * page
+                val limit = remainStocks.coerceAtMost(maxRequestCountPerSec)
+                stockService.getMarketCapTop(page, limit)
+            }
     }
 
     private fun saveExecutionHistory(
@@ -180,8 +178,7 @@ class StockDataCollectionBatchConfig(
     companion object {
         private const val DAILY_JOB_NAME = "stockDailyDataCollectionJob"
         private const val MINUTE_JOB_NAME = "stockMinuteDataCollectionJob"
-        private const val STOCK_COUNT = 2000
-        private const val MAX_REQUEST_COUNT_PER_SEC = 20
+        private const val STOCK_TOTAL_COUNT = 200
         private const val DAILY_GET_COUNT = 7
         private const val MINUTE_GET_COUNT = 120
         private var dailyBatchEndDate: LocalDate = LocalDate.now()

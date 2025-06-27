@@ -19,7 +19,7 @@ class BatchScheduler(
 ) {
     private val logger = logger()
 
-    @Scheduled(cron = "30 17 2 * * *")
+    @Scheduled(cron = "0 0 22 * * *")
     fun runPreviousStockDailyDataCollectionJob() {
         val jobParameters =
             JobParametersBuilder()
@@ -30,7 +30,7 @@ class BatchScheduler(
         jobLauncher.run(stockDailyDataCollectionJob, jobParameters)
     }
 
-    @Scheduled(cron = "0 52 21 * * *")
+    @Scheduled(cron = "0 0 23 * * *")
     fun runPreviousStockMinuteDataCollectionJob() {
         val jobParameters =
             JobParametersBuilder()

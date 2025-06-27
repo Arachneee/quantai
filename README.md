@@ -6,6 +6,7 @@
   - [ ] ReactiveCrudRepository, ReactiveMongoRepository 의 save, saveAll, insert, insertAll 성능 비교, Iterable, Publisher 성능 비교
 - [x] 과거 분봉 데이터 저장
   - [ ] 처리율 제한 설정 (1초에 20건)
-  - [ ] 분산 환경에서 처리율 제한 -> Kafka 활용
+  - [ ] 분산 환경에서 처리율 제한
 - [ ] 실시간 호가 데이터 저장
 - [ ] 실시간 체결가 데이터 저장
+- [ ] 로그 암호화

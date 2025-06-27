@@ -4,6 +4,7 @@ import com.quantai.api.dto.QueuedApiRequest
 import com.quantai.api.dto.TokenRequest
 import com.quantai.api.dto.TokenResponse
 import com.quantai.config.KisClientProperties
+import com.quantai.log.errorLog
 import com.quantai.log.logger
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
@@ -11,9 +12,10 @@ import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.Sinks
-import reactor.core.scheduler.Schedulers
+import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
@@ -30,7 +32,7 @@ abstract class KisClient(
     private val tokenExpired = AtomicReference<LocalDateTime>(null)
 
     private val requestSink: Sinks.Many<QueuedApiRequest> =
-        Sinks.many().unicast().onBackpressureBuffer<QueuedApiRequest>()
+        Sinks.many().multicast().onBackpressureBuffer<QueuedApiRequest>()
 
     @PostConstruct
     fun initialize() {
@@ -40,8 +42,6 @@ abstract class KisClient(
             } else {
                 properties.host
             }
-
-        initRateLimiterQueue()
 
         webClient =
             webClientBuilder
@@ -54,7 +54,13 @@ abstract class KisClient(
                     }
                 }.build()
 
-        getAccessToken().subscribe()
+        initRateLimiterQueue()
+
+        getAccessToken().subscribe(
+            { logger.info("Initial token acquired successfully") },
+            { error -> logger.errorLog(error) { "Failed to acquire initial token" } },
+        )
+
         logger.info("KIS API Client initialized with baseUrl: $baseUrl")
     }
 
@@ -67,37 +73,61 @@ abstract class KisClient(
     private fun initRateLimiterQueue() {
         requestSink
             .asFlux()
-            .delayElements(properties.delayDuration, Schedulers.boundedElastic())
-            .doOnNext { request -> logger.info("Processing queued request: ${request.clientRequest.url()}") }
-            .subscribe(
-                { queuedRequest ->
-                    queuedRequest.nextExchange
-                        .exchange(queuedRequest.clientRequest)
-                        .subscribe(
-                            { clientResponse ->
-                                queuedRequest.responseSink.success(clientResponse)
-                            },
-                            { error ->
-                                queuedRequest.responseSink.error(error)
-                            },
-                        )
-                },
+//            .bufferTimeout(properties.maxRequestCountPerSec, REQUEST_TERM)
+//            .concatMap { requests ->
+//                Mono
+//                    .delay(REQUEST_TERM)
+//                    .then(processRequests(requests))
+//            }
+            .delayElements(REQUEST_TERM)
+            .flatMap { request ->
+                request.nextExchange
+                    .exchange(request.clientRequest)
+                    .doOnNext { response ->
+                        request.responseSink.success(response)
+                    }.doOnError { error ->
+                        request.responseSink.error(error)
+                    }.onErrorResume { error ->
+                        logger.errorLog(error) { "Error processing request to ${request.clientRequest.url()}" }
+                        Mono.empty()
+                    }
+            }.onErrorContinue { error, _ ->
+                logger.errorLog(error) { "Error in queue consumer" }
+            }.subscribe(
+                { },
                 { error ->
-                    logger.error("Error in queue consumer: ${error.message}")
+                    logger.errorLog(error) { "Critical error in queue consumer" }
                 },
-                {
-                    logger.info("Request queue consumer completed.")
-                },
+                { logger.info("Queue consumer completed") },
             )
+    }
+
+    private fun processRequests(requests: List<QueuedApiRequest>): Mono<Void> {
+        if (requests.isEmpty()) return Mono.empty()
+
+        return Flux
+            .fromIterable(requests)
+            .flatMap({ request ->
+                request.nextExchange
+                    .exchange(request.clientRequest)
+                    .doOnNext { response ->
+                        request.responseSink.success(response)
+                    }.doOnError { error ->
+                        request.responseSink.error(error)
+                    }.onErrorResume { error ->
+                        logger.errorLog(error) { "Error processing request to ${request.clientRequest.url()}" }
+                        Mono.empty()
+                    }
+            }, properties.maxRequestCountPerSec)
+            .then()
     }
 
     private fun enqueueRequest(request: QueuedApiRequest) {
         val result = requestSink.tryEmitNext(request)
-        if (result.isSuccess) {
-            logger.info("Enqueued request: ${request.clientRequest.url()}")
-        } else {
-            logger.error("Failed to enqueue request: $result for ${request.clientRequest.url()}")
-            request.responseSink.error(RuntimeException("Failed to enqueue request: $result"))
+        if (result.isFailure) {
+            val errorMessage = "Failed to enqueue request: $result for ${request.clientRequest.url()}"
+            logger.error(errorMessage)
+            request.responseSink.error(RuntimeException(errorMessage))
         }
     }
 
@@ -136,7 +166,11 @@ abstract class KisClient(
                 logger.info("KIS API 접근 토큰 발급 완료")
                 newToken
             }.doOnError { error ->
-                logger.error("토큰 발급 중 오류 발생: ${error.message}", error)
-            }
+                logger.errorLog(error) { "토큰 발급 중 오류 발생: ${error.message}" }
+            }.retry(3) // 토큰 요청 실패 시 3번 재시도
+    }
+
+    companion object {
+        private val REQUEST_TERM = Duration.ofMillis(150L)
     }
 }
