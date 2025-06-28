@@ -58,6 +58,7 @@ class KisApiMockClientTest {
         every { requestBodySpec.contentType(MediaType.APPLICATION_JSON) } returns requestBodySpec
         every { requestBodySpec.body(any()) } returns requestBodySpec
         every { requestBodySpec.retrieve() } returns responseSpec
+        every { responseSpec.bodyToMono(TokenResponse::class.java) } returns Mono.empty()
 
         // KisApiClient 생성 및 초기화
         kisApiMockClient = KisMockClient(webClientBuilder, properties)

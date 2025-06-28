@@ -10,12 +10,9 @@ import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyInserters
-import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.Sinks
-import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
@@ -47,7 +44,7 @@ abstract class KisClient(
             webClientBuilder
                 .baseUrl(baseUrl)
                 .filter { request, next ->
-                    Mono.create<ClientResponse> { sink ->
+                    Mono.create { sink ->
                         enqueueRequest(
                             QueuedApiRequest(request, next, sink),
                         )
@@ -73,13 +70,7 @@ abstract class KisClient(
     private fun initRateLimiterQueue() {
         requestSink
             .asFlux()
-//            .bufferTimeout(properties.maxRequestCountPerSec, REQUEST_TERM)
-//            .concatMap { requests ->
-//                Mono
-//                    .delay(REQUEST_TERM)
-//                    .then(processRequests(requests))
-//            }
-            .delayElements(REQUEST_TERM)
+            .delayElements(properties.delayDuration)
             .flatMap { request ->
                 request.nextExchange
                     .exchange(request.clientRequest)
@@ -100,26 +91,6 @@ abstract class KisClient(
                 },
                 { logger.info("Queue consumer completed") },
             )
-    }
-
-    private fun processRequests(requests: List<QueuedApiRequest>): Mono<Void> {
-        if (requests.isEmpty()) return Mono.empty()
-
-        return Flux
-            .fromIterable(requests)
-            .flatMap({ request ->
-                request.nextExchange
-                    .exchange(request.clientRequest)
-                    .doOnNext { response ->
-                        request.responseSink.success(response)
-                    }.doOnError { error ->
-                        request.responseSink.error(error)
-                    }.onErrorResume { error ->
-                        logger.errorLog(error) { "Error processing request to ${request.clientRequest.url()}" }
-                        Mono.empty()
-                    }
-            }, properties.maxRequestCountPerSec)
-            .then()
     }
 
     private fun enqueueRequest(request: QueuedApiRequest) {
@@ -168,9 +139,5 @@ abstract class KisClient(
             }.doOnError { error ->
                 logger.errorLog(error) { "토큰 발급 중 오류 발생: ${error.message}" }
             }.retry(3) // 토큰 요청 실패 시 3번 재시도
-    }
-
-    companion object {
-        private val REQUEST_TERM = Duration.ofMillis(150L)
     }
 }
