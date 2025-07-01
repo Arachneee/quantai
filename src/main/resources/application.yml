@@ -71,3 +71,8 @@ kis-client-real:
   appSecret: ${KIS_APP_SECRET:MISSING_APP_SECRET}
   maxRequestCountPerSec: 20
   delayDuration: PT0.15S
+kis-websocket:
+  authDomain: https://openapi.koreainvestment.com:9443
+  websocketUri: ws://ops.koreainvestment.com:21000/tryitout/H0UNCNT0
+  retryMinBackOff: PT5S
+  retryMaxBackOff: PT60S
