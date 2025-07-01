@@ -3,7 +3,7 @@ package com.quantai.api
 import com.quantai.api.dto.QueuedApiRequest
 import com.quantai.api.dto.TokenRequest
 import com.quantai.api.dto.TokenResponse
-import com.quantai.config.KisClientProperties
+import com.quantai.config.properties.KisClientProperties
 import com.quantai.log.errorLog
 import com.quantai.log.logger
 import jakarta.annotation.PostConstruct

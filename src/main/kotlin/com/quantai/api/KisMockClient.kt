@@ -1,6 +1,6 @@
 package com.quantai.api
 
-import com.quantai.config.KisMockClientProperties
+import com.quantai.config.properties.KisMockClientProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient

@@ -1,7 +1,7 @@
 package com.quantai.api
 
 import com.quantai.api.dto.TokenResponse
-import com.quantai.config.KisMockClientProperties
+import com.quantai.config.properties.KisMockClientProperties
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension

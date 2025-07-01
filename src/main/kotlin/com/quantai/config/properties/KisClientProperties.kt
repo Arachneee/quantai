@@ -1,4 +1,4 @@
-package com.quantai.config
+package com.quantai.config.properties
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Duration
