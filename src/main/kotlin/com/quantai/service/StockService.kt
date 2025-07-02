@@ -86,8 +86,6 @@ class StockService(
             .getDailyMinuteChart(stockCode, date, time, includePastData, includeFakeTick)
             .filter { it.resultCode == "0" }
             .flatMapMany { response ->
-//                logger.info("분봉 데이터 응답 성공 - 종목: $stockCode, 응답 코드: ${response.resultCode}")
-
                 Flux
                     .fromIterable(response.priceList.orEmpty())
                     .map { MinuteStockPrice.from(it, stockCode) }

@@ -105,7 +105,7 @@ class StockDataCollectionBatchConfig(
             try {
                 val collectedCount = collectAndSaveStockMinuteData()
                 saveExecutionHistory(MINUTE_JOB_NAME, uuid, startDateTime, "COMPLETED", collectedCount)
-                updateDateRange()
+                minuteBatchEndDateTime = minuteBatchEndDateTime.minusHours(2)
             } catch (e: Exception) {
                 logger.errorLog(e) { "Failed to collect stock minute data: ${e.message}" }
                 saveExecutionHistory(MINUTE_JOB_NAME, uuid, startDateTime, "FAILED", 0, e.message)
