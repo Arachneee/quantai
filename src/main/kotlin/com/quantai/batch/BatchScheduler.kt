@@ -14,28 +14,36 @@ class BatchScheduler(
     private val jobLauncher: JobLauncher,
     private val stockDailyDataCollectionJob: Job,
     private val stockMinuteDataCollectionJob: Job,
+    private val stockTodayDataCollectionJob: Job,
 ) {
     private val logger = logger()
 
-    @Scheduled(cron = "0 0 22 * * *")
+    @Scheduled(cron = "0 0 6 * * *")
     fun runPreviousStockDailyDataCollectionJob() {
-        val jobParameters =
-            JobParametersBuilder()
-                .addString("uuid", UUID.randomUUID().toString())
-                .toJobParameters()
-
-        logger.info("과거 주식 일봉 데이터 수집 배치 작업 시작: ${LocalDateTime.now()}")
-        jobLauncher.run(stockDailyDataCollectionJob, jobParameters)
+        runBatchJob(stockDailyDataCollectionJob, "과거 주식 일봉 데이터 수집")
     }
 
-    @Scheduled(cron = "0 0 23 * * *")
+    @Scheduled(cron = "0 0 5 * * MON-FRI")
     fun runPreviousStockMinuteDataCollectionJob() {
+        runBatchJob(stockMinuteDataCollectionJob, "과거 주식 분봉 데이터 수집")
+    }
+
+    @Scheduled(cron = "0 0 20 * * MON-FRI")
+    fun runFinalTodayDataCollectionJob() {
+        runBatchJob(stockTodayDataCollectionJob, "마감 주식 데이터 수집")
+    }
+
+    private fun runBatchJob(
+        job: Job,
+        description: String,
+    ) {
         val jobParameters =
             JobParametersBuilder()
                 .addString("uuid", UUID.randomUUID().toString())
+                .addLong("time", System.currentTimeMillis())
                 .toJobParameters()
 
-        logger.info("과거 주식 분봉 데이터 수집 배치 작업 시작: ${LocalDateTime.now()}")
-        jobLauncher.run(stockMinuteDataCollectionJob, jobParameters)
+        logger.info("$description 배치 작업 시작: ${LocalDateTime.now()}")
+        jobLauncher.run(job, jobParameters)
     }
 }
