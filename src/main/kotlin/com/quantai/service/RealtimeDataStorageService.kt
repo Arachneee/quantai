@@ -10,6 +10,8 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Service
@@ -131,5 +133,34 @@ class RealtimeDataStorageService(
             }
 
         return executionSave.then(orderbookSave)
+    }
+
+    /**
+     * 일주일 이상 된 실시간 데이터를 매일 자정에 삭제합니다.
+     */
+    @Scheduled(cron = "0 0 0 * * ?") // 매일 자정에 실행
+    fun cleanupOldData() {
+        // 1주일 전 날짜 계산
+        val oneWeekAgo = LocalDateTime.now(ZoneId.of("Asia/Seoul")).minusDays(7)
+
+        logger.info("일주일 이상 된 실시간 데이터 삭제 작업 시작 (기준일: $oneWeekAgo)")
+
+        // 체결 데이터 삭제
+        realtimeExecutionRepository
+            .deleteByTimestampBefore(oneWeekAgo)
+            .doOnSuccess { count ->
+                logger.info("일주일 이상 된 체결 데이터 $count 건 삭제 완료")
+            }.doOnError { error ->
+                logger.errorLog(error) { "체결 데이터 삭제 중 오류 발생" }
+            }.subscribe()
+
+        // 호가 데이터 삭제
+        realtimeOrderbookRepository
+            .deleteByTimestampBefore(oneWeekAgo)
+            .doOnSuccess { count ->
+                logger.info("일주일 이상 된 호가 데이터 $count 건 삭제 완료")
+            }.doOnError { error ->
+                logger.errorLog(error) { "호가 데이터 삭제 중 오류 발생" }
+            }.subscribe()
     }
 }
