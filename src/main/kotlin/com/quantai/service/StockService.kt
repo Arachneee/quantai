@@ -1,7 +1,7 @@
 package com.quantai.service
 
-import com.quantai.api.KisMockClient
-import com.quantai.api.KisRealClient
+import com.quantai.client.KisMockClient
+import com.quantai.client.KisRealClient
 import com.quantai.domain.DailyStockPrice
 import com.quantai.domain.MinuteStockPrice
 import com.quantai.domain.StockCodeRepository

@@ -1,6 +1,6 @@
 package com.quantai.domain
 
-import com.quantai.api.dto.DailyChartPrice
+import com.quantai.client.dto.DailyChartPrice
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.Indexed

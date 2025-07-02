@@ -1,4 +1,4 @@
-package com.quantai.api
+package com.quantai.client
 
 import com.quantai.config.properties.KisMockClientProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties

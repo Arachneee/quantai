@@ -1,4 +1,4 @@
-package com.quantai.api.dto
+package com.quantai.client.dto
 
 import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.ClientResponse

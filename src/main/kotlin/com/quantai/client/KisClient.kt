@@ -1,8 +1,8 @@
-package com.quantai.api
+package com.quantai.client
 
-import com.quantai.api.dto.QueuedApiRequest
-import com.quantai.api.dto.TokenRequest
-import com.quantai.api.dto.TokenResponse
+import com.quantai.client.dto.QueuedApiRequest
+import com.quantai.client.dto.TokenRequest
+import com.quantai.client.dto.TokenResponse
 import com.quantai.config.properties.KisClientProperties
 import com.quantai.log.errorLog
 import com.quantai.log.logger

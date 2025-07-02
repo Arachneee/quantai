@@ -1,7 +1,7 @@
-package com.quantai.api
+package com.quantai.client
 
-import com.quantai.api.dto.MinuteChartResponse
-import com.quantai.api.dto.StockPriceResponse
+import com.quantai.client.dto.MinuteChartResponse
+import com.quantai.client.dto.StockPriceResponse
 import com.quantai.config.properties.KisRealClientProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Component

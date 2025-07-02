@@ -1,4 +1,4 @@
-package com.quantai.api.dto
+package com.quantai.client.dto
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
