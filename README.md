@@ -1,3 +1,10 @@
+## 기술 스택
+- Kotlin
+- Spring WebFlux
+- Spring Data MongoDB Reactive
+- Spring Batch
+- WebSocket
+
 ## 기능
 - [x] 주식 종목 엑셀 업로드
 - [x] 시가 총액 TOP 종목 조회
