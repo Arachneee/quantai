@@ -4,14 +4,12 @@ import com.quantai.log.logger
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobParametersBuilder
 import org.springframework.batch.core.launch.JobLauncher
-import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 import java.util.UUID
 
 @Component
-@EnableScheduling
 class BatchScheduler(
     private val jobLauncher: JobLauncher,
     private val stockDailyDataCollectionJob: Job,

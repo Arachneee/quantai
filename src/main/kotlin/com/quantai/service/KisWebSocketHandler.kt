@@ -16,6 +16,8 @@ import reactor.core.publisher.Mono
 class KisWebSocketHandler(
     private val webClientBuilder: WebClient.Builder,
     private val stockService: StockService,
+    private val realtimeDataParsingService: RealtimeDataParsingService,
+    private val realtimeDataStorageService: RealtimeDataStorageService,
     @Value("\${kis-websocket.authDomain}") private val authDomain: String,
     @Value("\${kis-client-real.appKey}") private val appKey: String,
     @Value("\${kis-client-real.appSecret}") private val appSecret: String,
@@ -54,7 +56,21 @@ class KisWebSocketHandler(
             session
                 .receive()
                 .doOnNext { message ->
-                    logger.info("웹소켓 메시지 수신: ${message.payloadAsText}")
+                    val messageText = message.payloadAsText
+                    logger.info("웹소켓 메시지 수신: $messageText")
+
+                    // 메시지 파싱 및 저장
+                    val parsedData = realtimeDataParsingService.parseWebSocketMessage(messageText)
+                    if (parsedData != null) {
+                        realtimeDataStorageService.saveRealtimeDataAsync(parsedData)
+                            .doOnSuccess { 
+                                logger.debug("실시간 데이터 저장 완료: ${parsedData::class.simpleName}")
+                            }
+                            .doOnError { error ->
+                                logger.errorLog(error) { "실시간 데이터 저장 중 오류 발생" }
+                            }
+                            .subscribe()
+                    }
                 }.then()
 
         return sendMono.then(receiveFlow)
