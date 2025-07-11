@@ -1,8 +1,10 @@
 package com.quantai.controller
 
-import com.quantai.service.OpenAiChatService
+import com.quantai.service.QuantAiService
 import com.quantai.service.dto.ChatRequestDto
 import com.quantai.service.dto.ChatResponseDto
+import com.quantai.service.dto.StrongPerformingStockResponse
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -11,21 +13,21 @@ import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
 
 @RestController
-@RequestMapping("/api/openai")
-class OpenAiController(
-    private val openAiChatService: OpenAiChatService,
+@RequestMapping("/api/quantai")
+class QuantAiController(
+    private val quantAiService: QuantAiService,
 ) {
-    /**
-     * OpenAI API를 통해 채팅 응답을 생성합니다.
-     *
-     * @param request 채팅 요청 DTO
-     * @return 채팅 응답 DTO
-     */
     @PostMapping("/chat")
     fun chat(
         @RequestBody request: ChatRequestDto,
     ): Mono<ChatResponseDto> =
         Mono
-            .fromCallable { openAiChatService.chat(request) }
+            .fromCallable { quantAiService.chat(request) }
+            .subscribeOn(Schedulers.boundedElastic())
+
+    @GetMapping("/strong-performing-stocks")
+    fun findStrongPerformingStocks(count: Int = 20): Mono<List<StrongPerformingStockResponse>> =
+        Mono
+            .fromCallable { quantAiService.findStrongPerformingStocks(count) }
             .subscribeOn(Schedulers.boundedElastic())
 }

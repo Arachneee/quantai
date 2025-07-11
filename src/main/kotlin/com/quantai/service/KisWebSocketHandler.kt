@@ -18,6 +18,7 @@ class KisWebSocketHandler(
     private val stockService: StockService,
     private val realtimeDataParsingService: RealtimeDataParsingService,
     private val realtimeDataStorageService: RealtimeDataStorageService,
+    private val quantAiService: QuantAiService,
     @Value("\${kis-websocket.authDomain}") private val authDomain: String,
     @Value("\${kis-client-real.appKey}") private val appKey: String,
     @Value("\${kis-client-real.appSecret}") private val appSecret: String,
@@ -31,13 +32,11 @@ class KisWebSocketHandler(
 
     override fun handle(session: WebSocketSession): Mono<Void?> {
         val subscribeMessagesFlux =
-            stockService
-                .getMarketCapTop(0, 20)
-                .map { it.code }
-                .collectList()
+            Mono
+                .fromCallable { quantAiService.findStrongPerformingStocks(20) }
                 .zipWith(getWebSocketApprovalKey())
                 .flatMapIterable { tuple ->
-                    val stockCodes = tuple.t1
+                    val stockCodes = tuple.t1.map { it.stockCode }
                     val approvalKey = tuple.t2
                     stockCodes.flatMap { stockCode ->
                         TR_IDS.map { trId -> createPayLoad(approvalKey, trId, stockCode) }
@@ -62,14 +61,13 @@ class KisWebSocketHandler(
                     // 메시지 파싱 및 저장
                     val parsedData = realtimeDataParsingService.parseWebSocketMessage(messageText)
                     if (parsedData != null) {
-                        realtimeDataStorageService.saveRealtimeDataAsync(parsedData)
-                            .doOnSuccess { 
+                        realtimeDataStorageService
+                            .saveRealtimeDataAsync(parsedData)
+                            .doOnSuccess {
                                 logger.debug("실시간 데이터 저장 완료: ${parsedData::class.simpleName}")
-                            }
-                            .doOnError { error ->
+                            }.doOnError { error ->
                                 logger.errorLog(error) { "실시간 데이터 저장 중 오류 발생" }
-                            }
-                            .subscribe()
+                            }.subscribe()
                     }
                 }.then()
 
