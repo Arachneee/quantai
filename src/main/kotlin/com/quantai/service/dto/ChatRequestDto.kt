@@ -5,7 +5,6 @@ package com.quantai.service.dto
  */
 data class ChatRequestDto(
     val message: String,
-    val systemPrompt: String? = null,
     val temperature: Double? = null,
     val maxTokens: Int? = null,
-) 
+)
